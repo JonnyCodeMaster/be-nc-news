@@ -40,7 +40,6 @@ describe("GET /api", () => {
   test("200 - responds with the file contents of endpoints.json", () => {
     return fs.readFile("endpoints.json", "utf8").then((fileContents) => {
       const endpoints = JSON.parse(fileContents);
-      console.log(endpoints, "<< endpoints");
       return request(app)
         .get("/api")
         .expect(200)
