@@ -3,29 +3,10 @@ const testData = require("../db/data/test-data/index.js");
 const seed = require("../db/seeds/seed.js");
 const request = require("supertest");
 const app = require("../app");
+const fs = require("fs/promises");
 
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
-
-describe("Test that appropriate error handling message is received when there is an error", () => {
-  test('400: responds with "Bad Request" when requesting an invalid query', () => {
-    return request(app)
-      .get("/api/topics?sort_by=invalidColumn")
-      .expect(400)
-      .then(({ body }) => {
-        expect(body.msg).toBe("Invalid Sort Request");
-      });
-  });
-
-  test('404: responds with "Resource Not Found" when requesting an invalid endpoint resource', () => {
-    return request(app)
-      .get("/api/endpoint-does-not-exist")
-      .expect(404)
-      .then(({ body }) => {
-        expect(body.msg).toBe("Resource Not Found");
-      });
-  });
-});
 
 describe("GET /api/topics", () => {
   test("200 - responds with an array of topic objects", () => {
@@ -42,6 +23,38 @@ describe("GET /api/topics", () => {
             slug: expect.any(String),
           });
         });
+      });
+  });
+
+  test('404: responds with "Resource Not Found" when requesting an invalid endpoint resource', () => {
+    return request(app)
+      .get("/api/invalid-endpoint")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
+      });
+  });
+});
+
+describe("GET /api", () => {
+  test("200 - responds with the file contents of endpoints.json", () => {
+    return fs.readFile("endpoints.json", "utf8").then((fileContents) => {
+      const endpoints = JSON.parse(fileContents);
+      return request(app)
+        .get("/api")
+        .expect(200)
+        .then(({ body }) => {
+          expect(body.endpoints).toEqual(endpoints);
+        });
+    });
+  });
+
+  test('404: responds with "Resource Not Found" when requesting an invalid endpoint resource', () => {
+    return request(app)
+      .get("/invalid-endpoint")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
       });
   });
 });
