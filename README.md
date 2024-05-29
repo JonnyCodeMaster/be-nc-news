@@ -1,7 +1,21 @@
 # Northcoders News API
 
-For instructions, please head over to [L2C NC News](https://l2c.northcoders.com/courses/be/nc-news).
+## Set Up Instructions
 
+## Create Environment Variables
+
+If you wish to clone this project and run it locally, you will not have access to the necessary environment variables. You must create the following files in your root directory in order to successfully connect to the two databases locally:
+
+.env.development
+.env.test
+
+Add the following content to the .env.development file:
+
+PGDATABASE=nc_news
+
+Add the following content to the .env.test file:
+
+PGDATABASE=nc_news_test
 
 
 --- 
