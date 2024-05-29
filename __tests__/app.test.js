@@ -62,7 +62,7 @@ describe("GET /api", () => {
 describe("GET /api/articles/:article_id", () => {
   test("200 - accepts an article_id and responds with the correct article information", () => {
     return request(app)
-      .get("/api/articles?article_id=1")
+      .get("/api/articles/1")
       .expect(200)
       .then(({ body }) => {
         expect(body.article).toEqual(
@@ -80,30 +80,23 @@ describe("GET /api/articles/:article_id", () => {
       });
   });
 
-  test("400 - responds with 'Bad Request' when an article_id is not entered", () => {
-    return request(app)
-      .get("/api/articles?article_id=")
-      .expect(400)
-      .then(({ body }) => {
-        expect(body.msg).toBe("Bad Request");
-      });
-  });
-
   test("400 - responds with 'Bad Request' when the article_id requested is invalid", () => {
     return request(app)
-      .get("/api/articles?article_id=invalid")
+      .get("/api/articles/invalid")
       .expect(400)
       .then(({ body }) => {
+        console.log(body.msg, "<<<<< test 400 msg invalid");
         expect(body.msg).toBe("Bad Request");
       });
   });
 
   test("404 - responds with 'Article Not Found' when the article_id requested does not exist", () => {
     return request(app)
-      .get("/api/articles?article_id=999999")
+      .get("/api/articles/999999")
       .expect(404)
       .then(({ body }) => {
+        console.log(body.msg, "<<<<< test 404 msg");
         expect(body.msg).toBe("Resource Not Found");
       });
   });
-});
+}); 
