@@ -1,13 +1,17 @@
 const express = require("express");
 const { getTopics } = require("./1. controllers/topics.controller");
 const { getEndpoints } = require("./1. controllers/endpoints.controller");
-const { getArticles } = require("./1. controllers/articles.controller");
+const {
+  getArticleId,
+  getArticles,
+} = require("./1. controllers/articles.controller");
 
 const app = express();
 
 app.get("/api/topics", getTopics);
 app.get("/api", getEndpoints);
-app.get("/api/articles/:article_id", getArticles);
+app.get("/api/articles/:article_id", getArticleId);
+app.get("/api/articles", getArticles);
 
 app.all("*", (req, res, next) => {
   res.status(404).send({ msg: "Resource Not Found" });
@@ -30,4 +34,4 @@ app.use((err, req, res, next) => {
     .send({ error: err.message || "Internal Server Error" });
 });
 
-module.exports = app; 
+module.exports = app;

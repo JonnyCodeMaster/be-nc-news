@@ -85,18 +85,86 @@ describe("GET /api/articles/:article_id", () => {
       .get("/api/articles/invalid")
       .expect(400)
       .then(({ body }) => {
-        console.log(body.msg, "<<<<< test 400 msg invalid");
         expect(body.msg).toBe("Bad Request");
       });
   });
 
-  test("404 - responds with 'Article Not Found' when the article_id requested does not exist", () => {
+  test("404 - responds with 'Resource Not Found' when the article_id requested does not exist", () => {
     return request(app)
       .get("/api/articles/999999")
       .expect(404)
       .then(({ body }) => {
-        console.log(body.msg, "<<<<< test 404 msg");
         expect(body.msg).toBe("Resource Not Found");
       });
   });
-}); 
+});
+
+describe("GET /api/articles", () => {
+  test("200 - responds with an array of article objects with the correct properties", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then(({ body }) => {
+        expect(body.articles).toBeInstanceOf(Array);
+        expect(body.articles).toHaveLength(13);
+        body.articles.forEach((article) => {
+          expect(article).toEqual(
+            expect.objectContaining({
+              author: expect.any(String),
+              title: expect.any(String),
+              article_id: expect.any(Number),
+              topic: expect.any(String),
+              created_at: expect.any(String),
+              votes: expect.any(Number),
+              article_img_url: expect.any(String),
+              comment_count: expect.any(String),
+            })
+          );
+          expect(article).not.toHaveProperty("body");
+        });
+      });
+  });
+
+  test("200 - responds with the correct comment_count for specific articles", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then(({ body }) => {
+        const articles = body.articles;
+        const articleId1 = articles.find((article) => article.article_id === 1);
+        const articleId9 = articles.find((article) => article.article_id === 9);
+        expect(articleId1).toBeDefined();
+        expect(articleId1.comment_count).toEqual("11");
+        expect(articleId9).toBeDefined();
+        expect(articleId9.comment_count).toEqual("2");
+      });
+  });
+
+  test("200 - responds with an array of article objects correctly sorted by created_at descending", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then(({ body }) => {
+        const articles = body.articles;
+        expect(articles).toBeInstanceOf(Array);
+        expect(articles).not.toHaveLength(0);
+
+        for (let i = 0; i < articles.length - 1; i++) {
+          expect(
+            new Date(articles[i].created_at).getTime()
+          ).toBeGreaterThanOrEqual(
+            new Date(articles[i + 1].created_at).getTime()
+          );
+        }
+      });
+  });
+
+  test("404 - responds with 'Resource Not Found' when endpoint is invalid", () => {
+    return request(app)
+      .get("/api/invalid-endpoint")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
+      });
+  });
+});
