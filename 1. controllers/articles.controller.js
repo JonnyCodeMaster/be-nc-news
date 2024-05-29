@@ -9,4 +9,4 @@ exports.getArticles = (req, res, next) => {
     .catch((err) => {
       next(err);
     });
-};
+}; 
