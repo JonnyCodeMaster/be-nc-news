@@ -1,18 +1,22 @@
 const express = require("express");
 const { getTopics } = require("./1. controllers/topics.controller");
 const { getEndpoints } = require("./1. controllers/endpoints.controller");
+const { getArticles } = require("./1. controllers/articles.controller");
 
 const app = express();
 
 app.get("/api/topics", getTopics);
 app.get("/api", getEndpoints);
+app.get("/api/articles/", getArticles);
 
 app.all("*", (req, res, next) => {
   res.status(404).send({ msg: "Resource Not Found" });
 });
 
 app.use((err, req, res, next) => {
-  if (err.status && err.msg) {
+  if (err.code === "22P02") {
+    res.status(400).send({ msg: "Bad Request" });
+  } else if (err.status && err.msg) {
     res.status(err.status).send({ msg: err.msg });
   } else {
     next(err);
