@@ -406,3 +406,38 @@ describe("GET /api/users", () => {
         });
     });
   });
+
+  describe('GET /api/articles?topic', () => {
+    test('200 - responds with an array of article objects filtered by the topic query', () => {
+      return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(({ body }) => {
+          const { articles } = body;
+          expect(articles).not.toHaveLength(0);
+          articles.forEach((article) => {
+            expect(article).toHaveProperty('topic', 'mitch');
+          });
+        });
+    });
+  
+    test('200 - responds with all articles when topic query is not provided', () => {
+      return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+          const { articles } = body;
+          expect(articles).toBeInstanceOf(Array);
+          expect(articles).not.toHaveLength(0);
+        });
+    });
+  
+    test('404 - responds with "Resource Not Found" when requesting an invalid topic', () => {
+      return request(app)
+        .get('/api/articles?topic=invalid')
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe('Resource Not Found');
+        });
+    });
+  });
