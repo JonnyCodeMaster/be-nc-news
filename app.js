@@ -1,17 +1,19 @@
 const express = require("express");
-const { getTopics } = require("./1. controllers/topics.controller");
 const { getEndpoints } = require("./1. controllers/endpoints.controller");
+const { getTopics } = require("./1. controllers/topics.controller");
 const {
-  getArticleId,
   getArticles,
+  getArticlesByArticleId,
+  getCommentsByArticleId,
 } = require("./1. controllers/articles.controller");
 
 const app = express();
 
-app.get("/api/topics", getTopics);
 app.get("/api", getEndpoints);
-app.get("/api/articles/:article_id", getArticleId);
+app.get("/api/topics", getTopics);
 app.get("/api/articles", getArticles);
+app.get("/api/articles/:article_id", getArticlesByArticleId);
+app.get("/api/articles/:article_id/comments", getCommentsByArticleId);
 
 app.all("*", (req, res, next) => {
   res.status(404).send({ msg: "Resource Not Found" });
