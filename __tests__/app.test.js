@@ -140,7 +140,7 @@ describe("GET /api/articles", () => {
       });
   });
 
-  test("200 - responds with an array of article objects correctly sorted by created_at descending", () => {
+  test("200 - responds with an array of article objects correctly sorted by created_at (date) descending", () => {
     return request(app)
       .get("/api/articles")
       .expect(200)
@@ -162,6 +162,79 @@ describe("GET /api/articles", () => {
   test("404 - responds with 'Resource Not Found' when endpoint is invalid", () => {
     return request(app)
       .get("/api/invalid-endpoint")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
+      });
+  });
+});
+
+describe("GET /api/articles/:article_id/comments", () => {
+  test("200 - accepts an article_id and responds with an array of comment objects", () => {
+    return request(app)
+      .get("/api/articles/1/comments")
+      .expect(200)
+      .then(({ body }) => {
+        const comments = body.comments;
+        expect(comments).toBeInstanceOf(Array);
+        expect(comments).toHaveLength(11);
+        body.comments.forEach((comment) => {
+          expect(comment).toEqual(
+            expect.objectContaining({
+              comment_id: expect.any(Number),
+              votes: expect.any(Number),
+              created_at: expect.any(String),
+              author: expect.any(String),
+              body: expect.any(String),
+              article_id: 1,
+            })
+          );
+        });
+      });
+  });
+
+  test("200 - responds with the correct array length for the article_id passed", () => {
+    return request(app)
+      .get("/api/articles/3/comments")
+      .expect(200)
+      .then(({ body }) => {
+        const comments = body.comments;
+        expect(comments).toBeInstanceOf(Array);
+        expect(comments).toHaveLength(2);
+      });
+  });
+
+  test("200 - responds with an array of comment objects correctly sorted by created_at (date) descending", () => {
+    return request(app)
+      .get("/api/articles/1/comments")
+      .expect(200)
+      .then(({ body }) => {
+        const comments = body.comments;
+        expect(comments).toBeInstanceOf(Array);
+        expect(comments).toHaveLength(11);
+
+        for (let i = 0; i < comments.length - 1; i++) {
+          expect(
+            new Date(comments[i].created_at).getTime()
+          ).toBeGreaterThanOrEqual(
+            new Date(comments[i + 1].created_at).getTime()
+          );
+        }
+      });
+  });
+
+  test("400 - responds with 'Bad Request' when the article_id requested is invalid", () => {
+    return request(app)
+      .get("/api/articles/invalid/comments")
+      .expect(400)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Bad Request");
+      });
+  });
+
+  test("404 - responds with 'Resource Not Found' when the article_id has no comments", () => {
+    return request(app)
+      .get("/api/articles/999999/comments")
       .expect(404)
       .then(({ body }) => {
         expect(body.msg).toBe("Resource Not Found");
