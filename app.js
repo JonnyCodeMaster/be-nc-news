@@ -8,6 +8,8 @@ const {
   postCommentByArticleId,
   patchArticleVotesByArticleId,
 } = require("./1. controllers/articles.controller");
+const { deleteCommentByCommentId } = require("./1. controllers/comments.controller");
+
 
 const app = express();
 
@@ -22,6 +24,8 @@ app.get("/api/articles/:article_id/comments", getCommentsByArticleId);
 app.post("/api/articles/:article_id/comments", postCommentByArticleId);
 
 app.patch("/api/articles/:article_id", patchArticleVotesByArticleId);
+
+app.delete("/api/comments/:comment_id", deleteCommentByCommentId)
 
 app.all("*", (req, res, next) => {
   res.status(404).send({ msg: "Resource Not Found" });
