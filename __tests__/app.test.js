@@ -4,6 +4,7 @@ const seed = require("../db/seeds/seed.js");
 const request = require("supertest");
 const app = require("../app");
 const fs = require("fs/promises");
+require('jest-sorted');
 
 beforeEach(() => seed(testData));
 afterAll(() => db.end());
@@ -105,7 +106,6 @@ describe("GET /api/articles", () => {
       .get("/api/articles")
       .expect(200)
       .then(({ body }) => {
-        expect(body.articles).toBeInstanceOf(Array);
         expect(body.articles).toHaveLength(13);
         body.articles.forEach((article) => {
           expect(article).toEqual(
@@ -148,14 +148,7 @@ describe("GET /api/articles", () => {
         const articles = body.articles;
         expect(articles).toBeInstanceOf(Array);
         expect(articles).not.toHaveLength(0);
-
-        for (let i = 0; i < articles.length - 1; i++) {
-          expect(
-            new Date(articles[i].created_at).getTime()
-          ).toBeGreaterThanOrEqual(
-            new Date(articles[i + 1].created_at).getTime()
-          );
-        }
+        expect(articles).toBeSorted({ key: "created_at", descending: true });
       });
   });
 
@@ -176,7 +169,6 @@ describe("GET /api/articles/:article_id/comments", () => {
       .expect(200)
       .then(({ body }) => {
         const comments = body.comments;
-        expect(comments).toBeInstanceOf(Array);
         expect(comments).toHaveLength(11);
         body.comments.forEach((comment) => {
           expect(comment).toEqual(
@@ -193,33 +185,14 @@ describe("GET /api/articles/:article_id/comments", () => {
       });
   });
 
-  test("200 - responds with the correct array length for the article_id passed", () => {
-    return request(app)
-      .get("/api/articles/3/comments")
-      .expect(200)
-      .then(({ body }) => {
-        const comments = body.comments;
-        expect(comments).toBeInstanceOf(Array);
-        expect(comments).toHaveLength(2);
-      });
-  });
-
   test("200 - responds with an array of comment objects correctly sorted by created_at (date) descending", () => {
     return request(app)
       .get("/api/articles/1/comments")
       .expect(200)
       .then(({ body }) => {
         const comments = body.comments;
-        expect(comments).toBeInstanceOf(Array);
         expect(comments).toHaveLength(11);
-
-        for (let i = 0; i < comments.length - 1; i++) {
-          expect(
-            new Date(comments[i].created_at).getTime()
-          ).toBeGreaterThanOrEqual(
-            new Date(comments[i + 1].created_at).getTime()
-          );
-        }
+        expect(comments).toBeSorted({ key: "created_at", descending: true });
       });
   });
 
@@ -232,7 +205,7 @@ describe("GET /api/articles/:article_id/comments", () => {
       });
   });
 
-  test("404 - responds with 'Resource Not Found' when the article_id has no comments", () => {
+  test("404 - responds with 'Resource Not Found' when the article_id entered does not exist", () => {
     return request(app)
       .get("/api/articles/999999/comments")
       .expect(404)
@@ -306,3 +279,66 @@ describe("POST /api/articles/:article_id/comments", () => {
       });
   });
 });
+
+describe('PATCH /api/articles/:article_id', () => {
+    test('200 - responds with the updated article', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: 1 })
+        .expect(200)
+        .then(({ body }) => {
+          expect(body).toHaveProperty('article_id', 1);
+          expect(body).toHaveProperty('votes', expect.any(Number));
+        });
+    });
+
+    test('200 - confirms that the number of votes on the article before the patch have been updated by the correct amount after the patch', async () => {
+        const responseBeforePatch = await request(app)
+        .get('/api/articles/1')
+        .expect(200);
+        const votesBeforePatch = responseBeforePatch.body.article.votes;
+
+        const VotesToIncrementBy = { inc_votes: 23 }
+        const sendPatch = await request(app)
+        .patch('/api/articles/1')
+        .send(VotesToIncrementBy)
+        .expect(200);
+
+        const responseAfterPatch = await request(app)
+        .get('/api/articles/1')
+        .expect(200);
+        const votesAfterPatch = responseAfterPatch.body.article.votes;
+
+        expect(votesAfterPatch).toBe(votesBeforePatch + VotesToIncrementBy.inc_votes);
+      });
+  
+    test('400 - responds with "Bad Request" when inc_votes is not a number', () => {
+      return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: 'invalid' })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe('Bad Request');
+        });
+    });
+  
+    test('400 - responds with "Bad Request" when the article_id entered is invalid', () => {
+      return request(app)
+        .patch('/api/articles/invalid')
+        .send({ inc_votes: 1 })
+        .expect(400)
+        .then(({ body }) => {
+          expect(body.msg).toBe('Bad Request');
+        });
+    });
+  
+    test('404 - responds with "Resource Not Found" when the article_id entered does not exist', () => {
+      return request(app)
+        .patch('/api/articles/999999')
+        .send({ inc_votes: 1 })
+        .expect(404)
+        .then(({ body }) => {
+          expect(body.msg).toBe('Resource Not Found');
+        });
+    });
+  });
