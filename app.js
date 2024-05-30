@@ -9,7 +9,7 @@ const {
   patchArticleVotesByArticleId,
 } = require("./1. controllers/articles.controller");
 const { deleteCommentByCommentId } = require("./1. controllers/comments.controller");
-
+const { getUsers } = require("./1. controllers/users.controller");
 
 const app = express();
 
@@ -20,6 +20,7 @@ app.get("/api/topics", getTopics);
 app.get("/api/articles", getArticles);
 app.get("/api/articles/:article_id", getArticlesByArticleId);
 app.get("/api/articles/:article_id/comments", getCommentsByArticleId);
+app.get("/api/users", getUsers);
 
 app.post("/api/articles/:article_id/comments", postCommentByArticleId);
 
