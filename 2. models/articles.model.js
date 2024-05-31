@@ -2,10 +2,12 @@ const db = require("../db/connection");
 
 exports.selectArticlesByArticleId = (article_id) => {
   let sqlQuery = `
-    SELECT *
-    FROM articles
-    WHERE articles.article_id = $1;
-    `;
+      SELECT articles.*, COUNT(comments.article_id) AS comment_count
+      FROM articles
+      LEFT JOIN comments ON comments.article_id = articles.article_id
+      WHERE articles.article_id = $1
+      GROUP BY articles.article_id;
+      `;
   const queryValues = [article_id];
 
   return db.query(sqlQuery, queryValues).then(({ rows }) => {
@@ -82,7 +84,7 @@ COUNT(comments.article_id) AS comment_count
   const queryParams = [];
 
   if (topic) {
-    queryStr += ' WHERE topic = $1';
+    queryStr += " WHERE topic = $1";
     queryParams.push(topic);
   }
 
