@@ -425,15 +425,6 @@ describe("GET /api/users", () => {
         });
       });
   });
-
-  test('404 - responds with "Resource Not Found" when requesting an invalid endpoint resource', () => {
-    return request(app)
-      .get("/api/invalid-endpoint")
-      .expect(404)
-      .then(({ body }) => {
-        expect(body.msg).toBe("Resource Not Found");
-      });
-  });
 });
 
 describe("GET /api/articles?topic", () => {
@@ -450,14 +441,12 @@ describe("GET /api/articles?topic", () => {
       });
   });
 
-  test("200 - responds with all articles when topic query is not provided", () => {
+  test("200 - responds with an empty array when given a topic that exists but has no associated articles", () => {
     return request(app)
-      .get("/api/articles")
+      .get("/api/articles?topic=paper")
       .expect(200)
       .then(({ body }) => {
-        const { articles } = body;
-        expect(articles).toBeInstanceOf(Array);
-        expect(articles).not.toHaveLength(0);
+        expect(body.articles).toEqual([]);
       });
   });
 

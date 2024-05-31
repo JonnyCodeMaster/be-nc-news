@@ -68,35 +68,61 @@ exports.updateArticleVotesByArticleId = (article_id, inc_votes) => {
   });
 };
 
-exports.selectArticles = (topic) => {
-  let queryStr = `
-  SELECT articles.author,
-articles.title,
-articles.article_id,
-articles.topic,
-articles.created_at,
-articles.votes,
-articles.article_img_url,
-COUNT(comments.article_id) AS comment_count
-  FROM articles
-  LEFT JOIN comments ON articles.article_id = comments.article_id
+exports.checkTopicExists = (topic) => {
+  const queryStr = `
+    SELECT * FROM topics
+    WHERE slug = $1;
   `;
-  const queryParams = [];
-
-  if (topic) {
-    queryStr += " WHERE topic = $1";
-    queryParams.push(topic);
-  }
-
-  queryStr += `
-  GROUP BY articles.article_id
-  ORDER BY created_at DESC;
-  `;
+  const queryParams = [topic];
 
   return db.query(queryStr, queryParams).then(({ rows }) => {
-    if (topic && rows.length === 0) {
+    if (rows.length === 0) {
       return Promise.reject({ status: 404, msg: "Resource Not Found" });
     }
-    return rows;
   });
+};
+
+exports.selectArticles = (topic) => {
+  if (topic) {
+    return this.checkTopicExists(topic)
+      .then(() => {
+        let queryStr = `
+          SELECT articles.author,
+          articles.title,
+          articles.article_id,
+          articles.topic,
+          articles.created_at,
+          articles.votes,
+          articles.article_img_url,
+          COUNT(comments.article_id) AS comment_count
+          FROM articles
+          LEFT JOIN comments ON articles.article_id = comments.article_id
+          WHERE topic = $1
+          GROUP BY articles.article_id
+          ORDER BY created_at DESC;
+        `;
+        const queryParams = [topic];
+        return db.query(queryStr, queryParams).then(({ rows }) => {
+          return rows;
+        });
+      });
+  } else {
+    let queryStr = `
+      SELECT articles.author,
+      articles.title,
+      articles.article_id,
+      articles.topic,
+      articles.created_at,
+      articles.votes,
+      articles.article_img_url,
+      COUNT(comments.article_id) AS comment_count
+      FROM articles
+      LEFT JOIN comments ON articles.article_id = comments.article_id
+      GROUP BY articles.article_id
+      ORDER BY created_at DESC;
+    `;
+    return db.query(queryStr).then(({ rows }) => {
+      return rows;
+    });
+  }
 };

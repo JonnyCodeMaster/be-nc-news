@@ -6,7 +6,6 @@ exports.getEndpoints = (req, res, next) => {
       res.status(200).send({ endpoints: JSON.parse(endpoints) });
     })
     .catch((err) => {
-      console.error(err);
       next(err);
     });
 };
