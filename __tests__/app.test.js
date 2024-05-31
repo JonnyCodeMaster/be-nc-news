@@ -61,7 +61,7 @@ describe("GET /api", () => {
 });
 
 describe("GET /api/articles/:article_id", () => {
-  test("200 - accepts an article_id and responds with the correct article information", () => {
+  test("200 - accepts an article_id and responds with the correct article information, including comment_count.", () => {
     return request(app)
       .get("/api/articles/1")
       .expect(200)
@@ -76,8 +76,19 @@ describe("GET /api/articles/:article_id", () => {
             created_at: expect.any(String),
             votes: expect.any(Number),
             article_img_url: expect.any(String),
+            comment_count: expect.any(String),
           })
         );
+      });
+  });
+
+  test("200 - responds with the correct comment_count for specific articles", () => {
+    return request(app)
+      .get("/api/articles/3")
+      .expect(200)
+      .then(({ body }) => {
+        expect(body.article.comment_count).toBeDefined();
+        expect(body.article.comment_count).toEqual("2");
       });
   });
 
@@ -278,6 +289,20 @@ describe("POST /api/articles/:article_id/comments", () => {
         expect(body.msg).toBe("Resource Not Found");
       });
   });
+
+  test("404 - responds with 'Resource Not Found' when the username entered does not exist", () => {
+    const newComment = {
+      username: "unknown_username",
+      body: "I never tire of learning about mitch",
+    };
+    return request(app)
+      .post("/api/articles/1/comments")
+      .send(newComment)
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
+      });
+  });
 });
 
 describe("PATCH /api/articles/:article_id", () => {
@@ -287,10 +312,20 @@ describe("PATCH /api/articles/:article_id", () => {
       .send({ inc_votes: 1 })
       .expect(200)
       .then(({ body }) => {
-        expect(body).toHaveProperty("article_id", 1);
-        expect(body).toHaveProperty("votes", expect.any(Number));
+        expect(body.article).toEqual(
+          expect.objectContaining({
+            author: expect.any(String),
+            title: expect.any(String),
+            article_id: 1,
+            body: expect.any(String),
+            topic: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String),
+          })
+        );
       });
-  });
+    });
 
   test("200 - confirms that the number of votes on the article before the patch have been updated by the correct amount after the patch", async () => {
     const responseBeforePatch = await request(app)
@@ -298,19 +333,15 @@ describe("PATCH /api/articles/:article_id", () => {
       .expect(200);
     const votesBeforePatch = responseBeforePatch.body.article.votes;
 
-    const VotesToIncrementBy = { inc_votes: 23 };
+    const IncrementVotesObj = { inc_votes: 23 };
     const sendPatch = await request(app)
       .patch("/api/articles/1")
-      .send(VotesToIncrementBy)
+      .send(IncrementVotesObj)
       .expect(200);
-
-    const responseAfterPatch = await request(app)
-      .get("/api/articles/1")
-      .expect(200);
-    const votesAfterPatch = responseAfterPatch.body.article.votes;
+    const votesAfterPatch = sendPatch.body.article.votes;
 
     expect(votesAfterPatch).toBe(
-      votesBeforePatch + VotesToIncrementBy.inc_votes
+      votesBeforePatch + IncrementVotesObj.inc_votes
     );
   });
 
@@ -351,9 +382,7 @@ describe("DELETE /api/comments/:comment_id", () => {
       .delete("/api/comments/1")
       .expect(204)
       .then(() => {
-        return request(app)
-        .get("/api/comments/1")
-        .expect(404);
+        return request(app).get("/api/comments/1").expect(404);
       })
       .then(({ body }) => {
         expect(body.msg).toBe("Resource Not Found");
@@ -380,64 +409,64 @@ describe("DELETE /api/comments/:comment_id", () => {
 });
 
 describe("GET /api/users", () => {
-    test("200 - responds with an array of user objects", () => {
-      return request(app)
-        .get("/api/users")
-        .expect(200)
-        .then(({ body }) => {
-          const { users } = body;
-          expect(users).toHaveLength(4);
-          users.forEach((user) => {
-            expect(user).toMatchObject({
-              username: expect.any(String),
-              name: expect.any(String),
-              avatar_url: expect.any(String),
-            });
+  test("200 - responds with an array of user objects", () => {
+    return request(app)
+      .get("/api/users")
+      .expect(200)
+      .then(({ body }) => {
+        const { users } = body;
+        expect(users).toHaveLength(4);
+        users.forEach((user) => {
+          expect(user).toMatchObject({
+            username: expect.any(String),
+            name: expect.any(String),
+            avatar_url: expect.any(String),
           });
         });
-    });
-  
-    test('404 - responds with "Resource Not Found" when requesting an invalid endpoint resource', () => {
-      return request(app)
-        .get("/api/invalid-endpoint")
-        .expect(404)
-        .then(({ body }) => {
-          expect(body.msg).toBe("Resource Not Found");
-        });
-    });
+      });
   });
 
-  describe('GET /api/articles?topic', () => {
-    test('200 - responds with an array of article objects filtered by the topic query', () => {
-      return request(app)
-        .get('/api/articles?topic=mitch')
-        .expect(200)
-        .then(({ body }) => {
-          const { articles } = body;
-          expect(articles).not.toHaveLength(0);
-          articles.forEach((article) => {
-            expect(article).toHaveProperty('topic', 'mitch');
-          });
-        });
-    });
-  
-    test('200 - responds with all articles when topic query is not provided', () => {
-      return request(app)
-        .get('/api/articles')
-        .expect(200)
-        .then(({ body }) => {
-          const { articles } = body;
-          expect(articles).toBeInstanceOf(Array);
-          expect(articles).not.toHaveLength(0);
-        });
-    });
-  
-    test('404 - responds with "Resource Not Found" when requesting an invalid topic', () => {
-      return request(app)
-        .get('/api/articles?topic=invalid')
-        .expect(404)
-        .then(({ body }) => {
-          expect(body.msg).toBe('Resource Not Found');
-        });
-    });
+  test('404 - responds with "Resource Not Found" when requesting an invalid endpoint resource', () => {
+    return request(app)
+      .get("/api/invalid-endpoint")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
+      });
   });
+});
+
+describe("GET /api/articles?topic", () => {
+  test("200 - responds with an array of article objects filtered by the topic query", () => {
+    return request(app)
+      .get("/api/articles?topic=mitch")
+      .expect(200)
+      .then(({ body }) => {
+        const { articles } = body;
+        expect(articles).not.toHaveLength(0);
+        articles.forEach((article) => {
+          expect(article).toHaveProperty("topic", "mitch");
+        });
+      });
+  });
+
+  test("200 - responds with all articles when topic query is not provided", () => {
+    return request(app)
+      .get("/api/articles")
+      .expect(200)
+      .then(({ body }) => {
+        const { articles } = body;
+        expect(articles).toBeInstanceOf(Array);
+        expect(articles).not.toHaveLength(0);
+      });
+  });
+
+  test('404 - responds with "Resource Not Found" when requesting an invalid topic', () => {
+    return request(app)
+      .get("/api/articles?topic=invalid")
+      .expect(404)
+      .then(({ body }) => {
+        expect(body.msg).toBe("Resource Not Found");
+      });
+  });
+});
