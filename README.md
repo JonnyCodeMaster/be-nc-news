@@ -30,7 +30,7 @@ Run the following commands in your terminal to install the dependencies:
 * pg-format (minimum version 1.x) [pg-format](https://www.npmjs.com/package/pg-format) - $ npm install pg-format
 
 
-### Dev Dependenciea
+### Dev Dependencies
 
 Run the following commands in your terminal to install the dev dependencies:
 
@@ -88,4 +88,4 @@ $ npm test app
 
 Thank you for your interest in my project.
 
-This portfolio project was created as part of a Digital Skills Bootcamp in Software Engineering provided by [Northcoders](https://northcoders.com/)
+This portfolio project was created as part of a Digital Skills Bootcamp in Software Engineering provided by [Northcoders](https://northcoders.com/).
